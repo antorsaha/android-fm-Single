@@ -42,6 +42,7 @@ import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
 import com.saha.androidfm.ui.theme.surface
 import com.saha.androidfm.utils.helpers.AppConstants
+import com.saha.androidfm.utils.helpers.AppHelper
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.AudioVisualizerBars
 import com.saha.androidfm.views.components.CircularAnimatedImage
@@ -56,7 +57,7 @@ fun HomeScreenContent(
     parentNavController: NavController,
     radioPlayerViewModel: RadioPlayerViewModel
 ) {
-    LocalContext.current
+    val context = LocalContext.current
     val isPlaying by radioPlayerViewModel.isPlaying.collectAsState()
     AppConstants.STATION_FREQUENCY.toFloatOrNull() ?: 88.9f
 
@@ -166,11 +167,13 @@ fun HomeScreenContent(
                 // Share Icon
                 Icon(
                     imageVector = Icons.Default.Share,
-                    contentDescription = "Share",
+                    contentDescription = "Share App",
                     tint = primaryTextColor,
                     modifier = Modifier
                         .size(32.dp)
-                        .clickable { /* Handle share */ }
+                        .clickable {
+                            AppHelper.shareApp(context)
+                        }
                 )
             }
 

@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.saha.fairdrivepartnerapp.utils.helper.CounterHelper
 import com.saha.androidfm.data.enums.NetworkState
+import com.saha.androidfm.utils.helpers.Logger
 import java.io.File
 import java.net.URLConnection
 import java.util.Calendar
@@ -23,10 +24,6 @@ object AppHelper {
     private val counterHelper = CounterHelper()
     private var isFirstTime = true
 
-    @SuppressLint("DefaultLocale")
-    fun currencyFormatedText(amount: Double): String {
-        return String.format("₹%.2f", amount)
-    }
 
     fun goToLocationSettings(context: Context) {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
@@ -41,6 +38,34 @@ object AppHelper {
 
     fun getCurrentYear(): Int {
         return Calendar.getInstance().get(Calendar.YEAR)
+    }
+
+    fun shareApp(context: Context) {
+        try {
+            val packageName = context.packageName
+            val playStoreUrl = "https://play.google.com/store/apps/details?id=$packageName"
+            
+            val shareMessage = """
+                🎵 Tune in to Dennery FM - The Best Music Lives Here! 🎵
+                
+                Download the app now and enjoy high-quality streaming!
+                
+                $playStoreUrl
+                
+            """.trimIndent()
+            
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, "Check out Dennery FM Radio App!")
+                putExtra(Intent.EXTRA_TEXT, shareMessage)
+            }
+            
+            val chooserIntent = Intent.createChooser(shareIntent, "Share Dennery FM")
+            chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooserIntent)
+        } catch (e: Exception) {
+            Logger.e("Error sharing app: ${e.message}", e, tag = "AppHelper")
+        }
     }
 
     fun setNetworkConnection(isConnected: Boolean) {
