@@ -44,6 +44,7 @@ import com.saha.androidfm.ui.theme.surface
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.AudioVisualizerBars
+import com.saha.androidfm.views.components.CircularAnimatedImage
 import com.saha.androidfm.views.components.HeightGap
 import com.saha.androidfm.views.components.WidthGap
 
@@ -77,58 +78,27 @@ fun HomeScreenContent(
                     .padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                HeightGap(8.dp)
+                HeightGap(16.dp)
 
                 Text(
-                    text = stringResource(R.string.radio),
+                    text = AppConstants.STATION_NAME,
                     style = MaterialTheme.typography.titleMedium,
                     color = secondaryTextColor,
-                    fontWeight = FontWeight.Normal
-                )
-
-                HeightGap(4.dp)
-                Text(
-                    text = AppConstants.STATION_FREQUENCY,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontSize = 48.sp
-                )
-
-                HeightGap(8.dp)
-
-                Text(
-                    text = stringResource(R.string.mhz),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = secondaryTextColor,
-                    fontWeight = FontWeight.Normal
                 )
 
                 HeightGap(32.dp)
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            color = surface,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
 
-                    Image(
-                        painter = painterResource(R.drawable.ic_launcher_foreground),
-                        contentDescription = null,
-                        modifier = Modifier.size(48.dp)
-                    )
+                CircularAnimatedImage(
+                    painter = painterResource(R.drawable.img_denneryfm),
+                    isPlaying = isPlaying,
+                    modifier = Modifier.size(200.dp),
+                    imageSize = 200.dp,
+                    animationDuration = 5000, // 5 seconds per rotation (slow)
+                    repetitions = 2,
+                    contentDescription = "Spinning image"
+                )
 
-                    WidthGap(4.dp)
-
-                    Text(
-                        text = AppConstants.STATION_NAME,
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-
-                }
             }
 
             Spacer(
