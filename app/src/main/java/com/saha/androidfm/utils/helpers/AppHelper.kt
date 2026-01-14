@@ -1,6 +1,5 @@
 package com.saha.androidfm.utils.helpers
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -8,9 +7,8 @@ import android.provider.Settings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import com.saha.fairdrivepartnerapp.utils.helper.CounterHelper
 import com.saha.androidfm.data.enums.NetworkState
-import com.saha.androidfm.utils.helpers.Logger
+import com.saha.fairdrivepartnerapp.utils.helper.CounterHelper
 import java.io.File
 import java.net.URLConnection
 import java.util.Calendar
@@ -44,7 +42,7 @@ object AppHelper {
         try {
             val packageName = context.packageName
             val playStoreUrl = "https://play.google.com/store/apps/details?id=$packageName"
-            
+
             val shareMessage = """
                 🎵 Tune in to Dennery FM - The Best Music Lives Here! 🎵
                 
@@ -53,13 +51,13 @@ object AppHelper {
                 $playStoreUrl
                 
             """.trimIndent()
-            
+
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"
                 putExtra(Intent.EXTRA_SUBJECT, "Check out Dennery FM Radio App!")
                 putExtra(Intent.EXTRA_TEXT, shareMessage)
             }
-            
+
             val chooserIntent = Intent.createChooser(shareIntent, "Share Dennery FM")
             chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(chooserIntent)
