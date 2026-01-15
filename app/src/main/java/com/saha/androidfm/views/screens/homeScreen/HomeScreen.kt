@@ -131,7 +131,7 @@ fun HomeScreen(navController: NavController) {
                             animationSpec = tween(animationDuration)
                         )
                     }) {
-                    HomeScreenContent(
+                    RadioScreen(
                         navControllerBottomNavigation,
                         navController,
                         radioPlayerViewMode

@@ -1,6 +1,5 @@
 package com.saha.androidfm.views.screens.homeScreen
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Pause
@@ -34,29 +32,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.saha.androidfm.R
 import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
-import com.saha.androidfm.ui.theme.surface
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.utils.helpers.AppHelper
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.AudioVisualizerBars
 import com.saha.androidfm.views.components.CircularAnimatedImage
 import com.saha.androidfm.views.components.HeightGap
-import com.saha.androidfm.views.components.WidthGap
 
 private const val TAG = "HomeScreenContent"
 
 @Composable
-fun HomeScreenContent(
+fun RadioScreen(
     navController: NavController,
     parentNavController: NavController,
     radioPlayerViewModel: RadioPlayerViewModel
