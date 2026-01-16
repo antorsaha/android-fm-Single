@@ -211,6 +211,25 @@ object AppHelper {
         )
     }
 
+    /**
+     * Open email client with pre-filled recipient
+     */
+    fun openEmail(context: Context, emailAddress: String) {
+        try {
+            val emailIntent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:$emailAddress")
+                putExtra(Intent.EXTRA_SUBJECT, "Contact Dennery FM")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            val chooserIntent = Intent.createChooser(emailIntent, "Send Email")
+            chooserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(chooserIntent)
+        } catch (e: Exception) {
+            Logger.e("Error opening email: ${e.message}", e, tag = "AppHelper")
+        }
+    }
+
     fun setNetworkConnection(isConnected: Boolean) {
         Logger.d(tag = "HomeScreen", message = "setNetworkConnection: $isConnected")
         counterHelper.stopCountdown()

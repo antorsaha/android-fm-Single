@@ -2,6 +2,7 @@ package com.saha.androidfm.views
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -9,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.google.gson.Gson
 import com.saha.androidfm.utils.helpers.ConfirmationDialogSpec
 import com.saha.androidfm.utils.helpers.DialogManager
 import com.saha.androidfm.utils.helpers.ErrorDialogSpec
@@ -19,10 +21,15 @@ import com.saha.androidfm.views.dialogs.AppLoader
 import com.saha.androidfm.views.dialogs.IosConfirmationDialog
 import com.saha.androidfm.views.dialogs.IosErrorDialog
 import com.saha.androidfm.views.dialogs.IosSuccessDialog
+import com.saha.androidfm.views.screens.WebViewScreen
+import com.saha.androidfm.views.screens.WebViewScreenRoute
 import com.saha.androidfm.views.screens.lifeSteam.LiveSteamScreen
 import com.saha.androidfm.views.screens.homeScreen.HomeScreen
 import com.saha.androidfm.views.screens.homeScreen.HomeScreenRoute
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
     val navController = rememberNavController()
@@ -111,6 +118,15 @@ fun App() {
             when (args.screenName) {
                 HomeScreenRoute::class.java.name -> {
                     HomeScreen(navController)
+                }
+
+                WebViewScreenRoute::class.java.name -> {
+                    val data = if (args.data != null) {
+                        Gson().fromJson(args.data, WebViewScreenRoute::class.java)
+                    } else {
+                        throw Exception("WebViewScreenRoute data is null")
+                    }
+                    WebViewScreen(navController = navController, title = data.title, url = data.url)
                 }
 
                 /*TestScreen::class.java.name -> {

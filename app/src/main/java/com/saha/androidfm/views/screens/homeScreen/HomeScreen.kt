@@ -187,7 +187,7 @@ fun HomeScreen(navController: NavController) {
                             AnimatedContentTransitionScope.SlideDirection.Right,
                             animationSpec = tween(animationDuration)
                         )
-                    }) { SettingScreen(navControllerBottomNavigation) }
+                    }) { SettingScreen(navController,navControllerBottomNavigation) }
 
             }
 

@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.google.gson.Gson
 import com.saha.androidfm.R
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
@@ -38,11 +39,14 @@ import com.saha.androidfm.ui.theme.surface
 import com.saha.androidfm.utils.ext.singleClick
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.utils.helpers.AppHelper
+import com.saha.androidfm.utils.navigation.NavigationWrapper
 import com.saha.androidfm.views.components.HeightGap
 import com.saha.androidfm.views.components.WidthGap
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @Composable
-fun SettingScreen(navController: NavController) {
+fun SettingScreen(parentNavController: NavController, navController: NavController) {
     val context = LocalContext.current
 
     Column(
@@ -81,7 +85,7 @@ fun SettingScreen(navController: NavController) {
             text = "News",
             icon = Icons.Default.Article
         ) {
-            // Navigate to news screen
+            navigateToWebView(parentNavController, "News", AppConstants.NEWS_URL)
         }
 
         HeightGap(8.dp)
@@ -90,7 +94,7 @@ fun SettingScreen(navController: NavController) {
             text = "Schedule",
             icon = Icons.Default.CalendarToday
         ) {
-            // Navigate to schedule screen
+            navigateToWebView(parentNavController, "Schedule", AppConstants.SCHEDULE_URL)
         }
 
         HeightGap(8.dp)
@@ -99,7 +103,7 @@ fun SettingScreen(navController: NavController) {
             text = "Events",
             icon = Icons.Default.Event
         ) {
-            // Navigate to events screen
+            navigateToWebView(parentNavController, "Events", AppConstants.EVENTS_URL)
         }
 
         HeightGap(8.dp)
@@ -108,7 +112,7 @@ fun SettingScreen(navController: NavController) {
             text = "Our DJs",
             icon = Icons.Default.People
         ) {
-            // Navigate to DJs screen
+            navigateToWebView(parentNavController, "Our DJs", AppConstants.OUR_DJ_URL)
         }
 
         HeightGap(32.dp)
@@ -127,7 +131,8 @@ fun SettingScreen(navController: NavController) {
             text = "Contact Us",
             icon = Icons.Default.Email
         ) {
-            // Open contact/email
+            // Open email client
+            AppHelper.openEmail(context, AppConstants.CONTACT_ADDRESS)
         }
 
         HeightGap(8.dp)
@@ -136,7 +141,7 @@ fun SettingScreen(navController: NavController) {
             text = "About Us",
             icon = Icons.Default.Info
         ) {
-            // Navigate to about us screen
+            navigateToWebView(parentNavController, "About Us", AppConstants.ABOUT_US_URL)
         }
 
         HeightGap(8.dp)
@@ -154,7 +159,7 @@ fun SettingScreen(navController: NavController) {
             text = "Privacy Policy",
             icon = Icons.Default.PrivacyTip
         ) {
-            // Navigate to privacy policy screen
+            navigateToWebView(parentNavController, "Privacy Policy", AppConstants.PRIVACY_POLICY_URL)
         }
 
         HeightGap(8.dp)
@@ -163,7 +168,7 @@ fun SettingScreen(navController: NavController) {
             text = "Terms of Use",
             icon = Icons.Default.Description
         ) {
-            // Navigate to terms of use screen
+            navigateToWebView(parentNavController, "Terms of Use", AppConstants.TERMS_OF_USE_URL)
         }
 
         HeightGap(32.dp)
@@ -229,6 +234,20 @@ fun SettingScreen(navController: NavController) {
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }
+}
+
+/**
+ * Helper function to navigate to WebViewScreen with encoded title and URL
+ */
+private fun navigateToWebView(navController: NavController, title: String, url: String) {
+    val data = Gson().toJson(WebViewScreenRoute(title, url))
+
+    navController.navigate(
+        NavigationWrapper(
+            data = data,
+            screenName = WebViewScreenRoute::class.java.name
+        )
+    )
 }
 
 @Composable
