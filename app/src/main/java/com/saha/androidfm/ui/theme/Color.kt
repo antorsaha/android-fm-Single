@@ -12,7 +12,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 // MARK: - Backgrounds
-val backgroundColor = Color(0xFF1C1726)
+val backgroundColor = Color(0xFF080717)
 val surface = Color(0xFF2E2938)
 val cardBackgroundColor = Color(0xFF1C1C1E) // Keep for backward compatibility
 

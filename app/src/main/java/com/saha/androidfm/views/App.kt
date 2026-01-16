@@ -26,6 +26,8 @@ import com.saha.androidfm.views.screens.WebViewScreenRoute
 import com.saha.androidfm.views.screens.lifeSteam.LiveSteamScreen
 import com.saha.androidfm.views.screens.homeScreen.HomeScreen
 import com.saha.androidfm.views.screens.homeScreen.HomeScreenRoute
+import com.saha.androidfm.views.screens.onboarding.OnboardingScreen
+import com.saha.androidfm.views.screens.onboarding.OnboardingScreenRoute
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
@@ -79,7 +81,8 @@ fun App() {
 
     NavHost(
         navController = navController, startDestination = NavigationWrapper(
-            data = null, screenName = HomeScreenRoute::class.java.name
+            data = null, screenName = OnboardingScreenRoute::class.java.name
+            // Change to HomeScreenRoute::class.java.name after testing onboarding
         )
     ) {
 
@@ -116,6 +119,23 @@ fun App() {
             val args = it.toRoute<NavigationWrapper>()
 
             when (args.screenName) {
+                OnboardingScreenRoute::class.java.name -> {
+                    OnboardingScreen(
+                        navController = navController,
+                        onFinish = {
+                            // Navigate to home and remove onboarding from stack
+                            navController.navigate(
+                                NavigationWrapper(
+                                    data = null,
+                                    screenName = HomeScreenRoute::class.java.name
+                                )
+                            ) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    )
+                }
+
                 HomeScreenRoute::class.java.name -> {
                     HomeScreen(navController)
                 }
@@ -128,115 +148,6 @@ fun App() {
                     }
                     WebViewScreen(navController = navController, title = data.title, url = data.url)
                 }
-
-                /*TestScreen::class.java.name -> {
-                    val stickerPack = remember {
-                        StickerPack(
-                            identifier = "sample_sticker_pack3",
-                            name = "ai sticker3",
-                            publisher = "ai antor publisher",
-                            trayImageFile = "sticker_1.webp",
-                            imageDataVersion = "1",
-                            stickers = listOf(
-                                Sticker(
-                                    imageFileName = "sticker_1.webp",
-                                    emojis = listOf("😀"),
-                                    accessibilityText = "Sticker 1",
-                                    drawableResId = R.drawable.sticker_1
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_2.webp",
-                                    emojis = listOf("😃"),
-                                    accessibilityText = "Sticker 2",
-                                    drawableResId = R.drawable.sticker_2
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_3.webp",
-                                    emojis = listOf("😄"),
-                                    accessibilityText = "Sticker 3",
-                                    drawableResId = R.drawable.sticker_3
-                                ),
-                                *//*Sticker(
-                                    imageFileName = "sticker_4.webp",
-                                    emojis = listOf("😁"),
-                                    accessibilityText = "Sticker 4",
-                                    drawableResId = R.drawable.sticker_4
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_5.webp",
-                                    emojis = listOf("😆"),
-                                    accessibilityText = "Sticker 5",
-                                    drawableResId = R.drawable.sticker_5
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_6.webp",
-                                    emojis = listOf("😅"),
-                                    accessibilityText = "Sticker 6",
-                                    drawableResId = R.drawable.sticker_6
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_7.webp",
-                                    emojis = listOf("😂"),
-                                    accessibilityText = "Sticker 7",
-                                    drawableResId = R.drawable.sticker_7
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_9.webp",
-                                    emojis = listOf("🤣"),
-                                    accessibilityText = "Sticker 9",
-                                    drawableResId = R.drawable.sticker_9
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_10.webp",
-                                    emojis = listOf("😊"),
-                                    accessibilityText = "Sticker 10",
-                                    drawableResId = R.drawable.sticker_10
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_11.webp",
-                                    emojis = listOf("😇"),
-                                    accessibilityText = "Sticker 11",
-                                    drawableResId = R.drawable.sticker_11
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_12.webp",
-                                    emojis = listOf("🙂"),
-                                    accessibilityText = "Sticker 12",
-                                    drawableResId = R.drawable.sticker_12
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_13.webp",
-                                    emojis = listOf("🙃"),
-                                    accessibilityText = "Sticker 13",
-                                    drawableResId = R.drawable.sticker_13
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_14.webp",
-                                    emojis = listOf("😉"),
-                                    accessibilityText = "Sticker 14",
-                                    drawableResId = R.drawable.sticker_14
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_15.webp",
-                                    emojis = listOf("😌"),
-                                    accessibilityText = "Sticker 15",
-                                    drawableResId = R.drawable.sticker_15
-                                ),
-                                Sticker(
-                                    imageFileName = "sticker_16.webp",
-                                    emojis = listOf("😍"),
-                                    accessibilityText = "Sticker 16",
-                                    drawableResId = R.drawable.sticker_16
-                                )*//*
-                            )
-                        )
-                    }
-
-                    StickerPackDetailsScreen(
-                        stickerPack = stickerPack,
-                        onBackClick = { navController.popBackStack() }
-                    )
-                }*/
 
                 else -> {
                     throw IllegalArgumentException("Unknown route: ${args.screenName}")
