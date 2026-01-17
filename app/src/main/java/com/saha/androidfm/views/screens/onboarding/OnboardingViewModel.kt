@@ -2,20 +2,19 @@ package com.saha.androidfm.views.screens.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.saha.androidfm.utils.helpers.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
-    // Inject your preferences repository here if needed
-    // private val preferencesRepository: PreferencesRepository
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
     
     fun completeOnboarding() {
         viewModelScope.launch {
-            // Save that onboarding is completed
-            // e.g., preferencesRepository.setOnboardingCompleted(true)
+            preferencesManager.setOnboardingCompleted(true)
         }
     }
 }

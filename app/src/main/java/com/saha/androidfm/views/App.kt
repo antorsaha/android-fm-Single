@@ -6,6 +6,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,8 +17,10 @@ import com.saha.androidfm.utils.helpers.ConfirmationDialogSpec
 import com.saha.androidfm.utils.helpers.DialogManager
 import com.saha.androidfm.utils.helpers.ErrorDialogSpec
 import com.saha.androidfm.utils.helpers.LoadingManager
+import com.saha.androidfm.utils.helpers.PreferencesManager
 import com.saha.androidfm.utils.helpers.SuccessDialogSpec
 import com.saha.androidfm.utils.navigation.NavigationWrapper
+import com.saha.androidfm.views.screens.onboarding.OnboardingViewModel
 import com.saha.androidfm.views.dialogs.AppLoader
 import com.saha.androidfm.views.dialogs.IosConfirmationDialog
 import com.saha.androidfm.views.dialogs.IosErrorDialog
@@ -35,8 +39,25 @@ import java.nio.charset.StandardCharsets
 @Composable
 fun App() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val preferencesManager = remember { PreferencesManager.create(context) }
     val isLoading by LoadingManager.isLoading.collectAsState()
     val centralDialogSpec by DialogManager.dialog.collectAsState()
+
+    // Determine start destination based on onboarding completion
+    val startDestination = remember {
+        if (preferencesManager.isOnboardingCompleted()) {
+            NavigationWrapper(
+                data = null,
+                screenName = HomeScreenRoute::class.java.name
+            )
+        } else {
+            NavigationWrapper(
+                data = null,
+                screenName = OnboardingScreenRoute::class.java.name
+            )
+        }
+    }
 
     val animationDuration = 500
 
@@ -80,10 +101,8 @@ fun App() {
     }
 
     NavHost(
-        navController = navController, startDestination = NavigationWrapper(
-            data = null, screenName = OnboardingScreenRoute::class.java.name
-            // Change to HomeScreenRoute::class.java.name after testing onboarding
-        )
+        navController = navController,
+        startDestination = startDestination
     ) {
 
         composable("profile") {
