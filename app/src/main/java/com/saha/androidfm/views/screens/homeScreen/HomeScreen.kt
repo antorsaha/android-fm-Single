@@ -42,12 +42,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdSize
+import com.google.android.gms.ads.AdView
 import com.saha.androidfm.R
 import com.saha.androidfm.data.enums.Screen
 import com.saha.androidfm.ui.theme.accent
@@ -56,7 +60,6 @@ import com.saha.androidfm.ui.theme.secondaryTextColor
 import com.saha.androidfm.ui.theme.surface
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
-import com.saha.androidfm.views.components.BannerAd
 import com.saha.androidfm.views.screens.SettingScreen
 import com.saha.androidfm.views.screens.lifeSteam.LiveSteamScreen
 
@@ -103,8 +106,14 @@ fun HomeScreen(navController: NavController) {
                                       currentDestination?.route == history.route
                     
                     if (shouldShowAd) {
-                        BannerAd(
-                            adUnitId = AppConstants.BANNER_AD_UNIT_ID,
+                        AndroidView(
+                            factory = { context ->
+                                AdView(context).apply {
+                                    adUnitId = AppConstants.BANNER_AD_UNIT_ID
+                                    setAdSize(AdSize.BANNER)
+                                    loadAd(AdRequest.Builder().build())
+                                }
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -126,16 +135,6 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
             }) { paddingValues ->
-
-            if (currentDestination?.route == home.route){
-                Image(
-                    painter = painterResource(R.drawable.onboarding_image_1),
-                    contentDescription = null,
-                    modifier = Modifier.fillMaxSize()
-                        .alpha(0.10f),
-                    contentScale = ContentScale.Crop
-                )
-            }
 
             NavHost(
                 navController = navControllerBottomNavigation,

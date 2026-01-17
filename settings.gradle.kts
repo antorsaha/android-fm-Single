@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Dennery FM"
+rootProject.name = "Single station"
 include(":app")

@@ -110,7 +110,5 @@ dependencies {
 
     // Google AdMob
     implementation("com.google.android.gms:play-services-ads:23.0.0")
-    
-    //implementation("com.facebook:stickerpackvalidator:1.0.0")
-    //implementation("org.jetbrains.kotlinx:kotlinx-parcelize-runtime:1.9.0")
+
 }
