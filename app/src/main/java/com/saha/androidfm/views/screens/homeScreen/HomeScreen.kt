@@ -3,6 +3,7 @@ package com.saha.androidfm.views.screens.homeScreen
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -30,11 +31,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,6 +48,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.saha.androidfm.R
 import com.saha.androidfm.data.enums.Screen
 import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
@@ -121,6 +126,16 @@ fun HomeScreen(navController: NavController) {
                     )
                 }
             }) { paddingValues ->
+
+            if (currentDestination?.route == home.route){
+                Image(
+                    painter = painterResource(R.drawable.onboarding_image_1),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+                        .alpha(0.10f),
+                    contentScale = ContentScale.Crop
+                )
+            }
 
             NavHost(
                 navController = navControllerBottomNavigation,

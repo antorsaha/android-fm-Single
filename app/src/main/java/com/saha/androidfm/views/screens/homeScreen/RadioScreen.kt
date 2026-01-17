@@ -78,7 +78,6 @@ fun RadioScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(backgroundColor)
     ) {
 
         Column(
