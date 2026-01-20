@@ -13,7 +13,7 @@ val Pink40 = Color(0xFFEC4899)
 
 // MARK: - Backgrounds
 val backgroundColor = Color(0xFF111923) // Deep charcoal with subtle blue undertone (FIXED)
-val surface = Color(0xFF1C1B23) // Elevated surface with subtle purple-gray tint
+val surface = Color(0xFF2C3A57) // Elevated surface with subtle purple-gray tint
 val cardBackgroundColor = Color(0xFF25232D) // Card background with purple-gray tint
 
 // MARK: - Text Colors
