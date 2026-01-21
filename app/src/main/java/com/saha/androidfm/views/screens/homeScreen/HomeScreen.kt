@@ -1,3 +1,5 @@
+@file:Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
+
 package com.saha.androidfm.views.screens.homeScreen
 
 import androidx.compose.animation.AnimatedContentTransitionScope
@@ -32,7 +34,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,9 +62,7 @@ object HomeScreenRoute
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavController) {
-    LocalContext.current
-    val viewModel: HomeViewModel = hiltViewModel()
-    val radioPlayerViewMode: RadioPlayerViewModel = hiltViewModel()
+    val radioPlayerViewModel: RadioPlayerViewModel = hiltViewModel()
 
     val home = Screen("home", "Radio", Icons.Default.Radio)
     val history = Screen("history", "Live Stream", Icons.Default.VideoCameraFront)
@@ -95,9 +94,9 @@ fun HomeScreen(navController: NavController) {
             bottomBar = {
                 Column {
                     // Show banner ad only for Radio and Live Stream screens
-                    val shouldShowAd = currentDestination?.route == home.route || 
-                                      currentDestination?.route == history.route
-                    
+                    val shouldShowAd = currentDestination?.route == home.route ||
+                            currentDestination?.route == history.route
+
                     if (shouldShowAd) {
                         AndroidView(
                             factory = { context ->
@@ -112,7 +111,7 @@ fun HomeScreen(navController: NavController) {
                                 .padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
-                    
+
                     FloatingBottomNavigationBar(
                         items = items,
                         currentRoute = currentDestination?.route,
@@ -160,9 +159,7 @@ fun HomeScreen(navController: NavController) {
                         )
                     }) {
                     RadioScreen(
-                        navControllerBottomNavigation,
-                        navController,
-                        radioPlayerViewMode
+                        radioPlayerViewModel
                     )
                 }
                 composable(
@@ -188,7 +185,7 @@ fun HomeScreen(navController: NavController) {
                             AnimatedContentTransitionScope.SlideDirection.Right,
                             animationSpec = tween(animationDuration)
                         )
-                    }) { LiveSteamScreen(navControllerBottomNavigation) }
+                    }) { LiveSteamScreen(radioPlayerViewModel) }
                 composable(
                     settings.route, enterTransition = {
                         slideIntoContainer(
@@ -212,7 +209,7 @@ fun HomeScreen(navController: NavController) {
                             AnimatedContentTransitionScope.SlideDirection.Right,
                             animationSpec = tween(animationDuration)
                         )
-                    }) { SettingScreen(navController,navControllerBottomNavigation) }
+                    }) { SettingScreen(navController, navControllerBottomNavigation) }
 
             }
 

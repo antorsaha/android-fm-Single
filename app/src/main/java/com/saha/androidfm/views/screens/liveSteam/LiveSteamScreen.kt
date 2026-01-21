@@ -1,48 +1,79 @@
 @file:kotlin.OptIn(ExperimentalMaterial3Api::class)
+@file:Suppress("COMPOSE_APPLIER_CALL_MISMATCH")
 
 package com.saha.androidfm.views.screens.liveSteam
 
 import android.app.Activity
-import android.content.pm.ActivityInfo
-import android.os.Build
-import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
+import android.net.Uri
+import android.util.Log
 import android.view.WindowManager
 import androidx.annotation.OptIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import android.net.Uri
-import android.util.Log
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.MediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import androidx.core.net.toUri
-import androidx.navigation.NavController
 import com.saha.androidfm.R
 import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
@@ -50,147 +81,143 @@ import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.utils.helpers.M3UParser
+import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.HeightGap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @ExperimentalMaterial3Api
-@OptIn(UnstableApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
+@OptIn(
+    UnstableApi::class, ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class,
     ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class
 )
 @Composable
-fun LiveSteamScreen(navController: NavController) {
+fun LiveSteamScreen(
+    radioPlayerViewModel: RadioPlayerViewModel = hiltViewModel()
+) {
     val context = LocalContext.current
     val activity = context as? Activity
-    
+
     // State for video player
     var exoPlayer: ExoPlayer? by remember { mutableStateOf(null) }
     var isPlaying by remember { mutableStateOf(false) }
     var isFullscreen by remember { mutableStateOf(false) }
-    var isMuted by remember { mutableStateOf(false) }
-    var showMuteOverlay by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(true) }
-    var retryKey by remember { mutableStateOf(0) }
-    var isStreamAvailable by remember { mutableStateOf(false) }
-    
+    var retryKey by remember { mutableIntStateOf(0) }
+    var isMuted by remember { mutableStateOf(false) }
+
+    // Observe radio player state
+    val isRadioPlaying by radioPlayerViewModel.isPlaying.collectAsState()
+
     // Helper function to create MediaSource with proper configuration
-    @OptIn(UnstableApi::class)
     fun createMediaSource(ctx: android.content.Context, uri: Uri): MediaSource {
-        // Create HTTP data source factory with proper headers for streaming
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent("ExoPlayer/Media3")
             .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(30000) // 30 seconds
-            .setReadTimeoutMs(30000) // 30 seconds
-            .setDefaultRequestProperties(
-                mapOf(
-                    "Connection" to "keep-alive",
-                    "Accept" to "*/*",
-                    "User-Agent" to "ExoPlayer/Media3"
-                )
-            )
-        
-        // Create default data source factory
+            .setConnectTimeoutMs(30000)
+            .setReadTimeoutMs(30000)
+
         val dataSourceFactory = DefaultDataSource.Factory(ctx, httpDataSourceFactory)
-        
-        // Create progressive media source for HTTP streaming
+
+        val isHls = uri.toString().contains(".m3u8")
         val mediaItem = MediaItem.Builder()
             .setUri(uri)
+            .apply {
+                if (isHls) setMimeType(MimeTypes.APPLICATION_M3U8)
+            }
             .build()
-        
-        return ProgressiveMediaSource.Factory(dataSourceFactory)
+
+        // Use DefaultMediaSourceFactory which automatically handles HLS, DASH, and Progressive
+        return DefaultMediaSourceFactory(dataSourceFactory)
             .createMediaSource(mediaItem)
     }
-    
+
     // Initialize ExoPlayer with proper MediaSource for video streaming
+    // Initialize ExoPlayer
     LaunchedEffect(retryKey) {
         try {
+            // Stop radio if it's playing when video starts loading
+            if (isRadioPlaying) {
+                radioPlayerViewModel.pause()
+                Log.d("LiveStreamScreen", "Radio paused - video stream starting")
+            }
+
             val streamUrl = AppConstants.LIVE_STREAM_VIDEO_URL
             Log.d("LiveStreamScreen", "Loading stream URL: $streamUrl")
-            
+
             var actualStreamUrl = streamUrl
-            
-            // Check if URL is M3U playlist (needs parsing) or direct stream
-            if (streamUrl.endsWith(".m3u") || streamUrl.endsWith(".m3u8")) {
-                Log.d("LiveStreamScreen", "M3U playlist detected - parsing...")
-                isLoading = true
-                
-                // Parse M3U playlist to get actual stream URL
+
+            // ONLY parse .m3u files manually.
+            // DO NOT parse .m3u8 files manually as ExoPlayer handles them internally (HLS).
+            // Manual parsing of .m3u8 often extracts relative segment paths (.ts) which fails.
+            if (streamUrl.endsWith(".m3u") && !streamUrl.contains(".m3u8")) {
+                Log.d("LiveStreamScreen", "M3U playlist detected - parsing manually...")
                 try {
                     val m3uContent = withContext(Dispatchers.IO) {
                         java.net.URL(streamUrl).openStream().bufferedReader().use { it.readText() }
                     }
                     val streams = M3UParser.parseM3UContent(m3uContent)
-                    
                     if (streams.isNotEmpty()) {
                         actualStreamUrl = streams[0].url
-                        Log.d("LiveStreamScreen", "Found ${streams.size} streams, using first: $actualStreamUrl")
-                    } else {
-                        errorMessage = "No streams found in M3U playlist"
-                        isLoading = false
-                        return@LaunchedEffect
                     }
                 } catch (e: Exception) {
-                    errorMessage = "Failed to parse M3U playlist: ${e.message}"
-                    isLoading = false
                     Log.e("LiveStreamScreen", "Error parsing M3U", e)
-                    return@LaunchedEffect
                 }
             }
-            
+
             val player = ExoPlayer.Builder(context)
                 .build()
                 .apply {
-                    // Create MediaSource for better streaming support
                     val uri = actualStreamUrl.toUri()
-                    Log.d("LiveStreamScreen", "Creating MediaSource for URI: $uri")
                     val mediaSource = createMediaSource(context, uri)
-                    
+
                     setMediaSource(mediaSource)
                     prepare()
-                    playWhenReady = false
-                    volume = if (isMuted) 0f else 1f
-                    
+                    playWhenReady = true
+
                     addListener(object : Player.Listener {
                         override fun onIsPlayingChanged(playing: Boolean) {
                             isPlaying = playing
+                            // Stop radio when video starts playing
+                            if (playing && isRadioPlaying) {
+                                radioPlayerViewModel.pause()
+                                Log.d("LiveStreamScreen", "Radio paused - video is now playing")
+                            }
                         }
-                        
+
                         override fun onPlaybackStateChanged(playbackState: Int) {
                             when (playbackState) {
                                 Player.STATE_BUFFERING -> {
                                     isLoading = true
-                                    errorMessage = null
-                                    isStreamAvailable = false
+                                    // Stop radio when video starts buffering
+                                    if (isRadioPlaying) {
+                                        radioPlayerViewModel.pause()
+                                        Log.d(
+                                            "LiveStreamScreen",
+                                            "Radio paused - video is buffering"
+                                        )
+                                    }
                                 }
+
                                 Player.STATE_READY -> {
                                     isLoading = false
                                     errorMessage = null
-                                    isStreamAvailable = true
-                                    Log.d("LiveStreamScreen", "Stream is available and ready")
+                                    // Stop radio when video is ready to play
+                                    if (isRadioPlaying) {
+                                        radioPlayerViewModel.pause()
+                                        Log.d("LiveStreamScreen", "Radio paused - video is ready")
+                                    }
                                 }
-                                Player.STATE_IDLE -> {
-                                    isLoading = false
-                                    isStreamAvailable = false
-                                }
-                                Player.STATE_ENDED -> {
-                                    isLoading = false
-                                    isStreamAvailable = false
-                                }
+
+                                Player.STATE_IDLE, Player.STATE_ENDED -> isLoading = false
                             }
                         }
-                        
+
                         override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
                             isLoading = false
-                            isStreamAvailable = false
-                            val errorType = when {
-                                error.errorCode in 2000..2999 -> "Network error - stream may not be available"
-                                error.errorCode in 4000..4999 -> "Stream format not supported"
-                                else -> "Stream not available"
-                            }
-                            errorMessage = errorType
-                            Log.e("LiveStreamScreen", "Player error: ${error.message}", error)
+                            errorMessage = "Stream error: ${error.message}"
+                            Log.e("LiveStreamScreen", "Player error: ${error.errorCodeName}", error)
                         }
                     })
                 }
@@ -198,54 +225,24 @@ fun LiveSteamScreen(navController: NavController) {
         } catch (e: Exception) {
             isLoading = false
             errorMessage = "Failed to initialize player: ${e.message}"
-            Log.e("LiveStreamScreen", "Error initializing player", e)
         }
     }
-    
+
     // Cleanup on dispose
     DisposableEffect(Unit) {
         onDispose {
             exoPlayer?.release()
         }
     }
-    
-    // Handle fullscreen
-    LaunchedEffect(isFullscreen) {
-        activity?.let { act ->
-            if (isFullscreen) {
-                act.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                act.window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-                
-                // Use WindowInsetsController for API 30+ (replaces deprecated systemUiVisibility)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    act.window.insetsController?.let { controller ->
-                        controller.hide(WindowInsets.Type.systemBars())
-                        controller.systemBarsBehavior = 
-                            WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    }
-                } else {
-                    @Suppress("DEPRECATION")
-                    act.window.decorView.systemUiVisibility = (
-                        View.SYSTEM_UI_FLAG_FULLSCREEN
-                        or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                        or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    )
-                }
-            } else {
-                act.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-                act.window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-                
-                // Use WindowInsetsController for API 30+ (replaces deprecated systemUiVisibility)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    act.window.insetsController?.show(WindowInsets.Type.systemBars())
-                } /*else {
-                    @Suppress("DEPRECATION")
-                    act.window.decorView.systemUiVisibility = View.SYSTEM_UI_VISIBLE
-                }*/
-            }
+
+    // Keep screen on while viewing live stream
+    DisposableEffect(Unit) {
+        activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
     }
-    
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -268,145 +265,100 @@ fun LiveSteamScreen(navController: NavController) {
             }
             HeightGap(24.dp)
 
-            
+
             // Video Player
             Box(
-                modifier = Modifier
+                modifier = if (isFullscreen) Modifier.fillMaxSize()
+                else Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .aspectRatio(16f / 11f)
-                    .background(
-                        color = Color.Black,
-                        shape = RoundedCornerShape(12.dp)
-                    )
+                    .aspectRatio(16f / 9f)
             ) {
-                when {
-                    errorMessage != null || (!isLoading && !isStreamAvailable) -> {
-                        // Show stream not available message
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ErrorOutline,
-                                contentDescription = "Stream not available",
-                                tint = Color.White.copy(alpha = 0.7f),
-                                modifier = Modifier.size(40.dp)
+                Card(
+                    modifier = Modifier.fillMaxSize(),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black),
+                    shape = RectangleShape
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (exoPlayer != null) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    PlayerView(ctx).apply {
+                                        this.player = exoPlayer
+                                        useController = true
+                                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                        setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+                                        // Hide previous and next buttons
+                                        setShowPreviousButton(false)
+                                        setShowNextButton(false)
+                                    }
+                                },
+                                modifier = Modifier.fillMaxSize(),
+                                update = { view ->
+                                    view.player = exoPlayer
+                                    // Ensure buttons stay hidden on update
+                                    view.setShowPreviousButton(false)
+                                    view.setShowNextButton(false)
+                                }
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = stringResource(R.string.steam_not_available_message),
-                                color = Color.White,
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center,
-                                fontSize = 16.sp
-                            )
-
                         }
-                    }
-                    isLoading -> {
-                        // Show loading indicator
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
+
+                        if (isLoading) {
                             CircularProgressIndicator(
-                                modifier = Modifier.size(48.dp),
+                                modifier = Modifier.align(Alignment.Center),
                                 color = accent
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "Loading stream...",
-                                color = Color.White.copy(alpha = 0.8f),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
                         }
-                    }
-                    isStreamAvailable && exoPlayer != null -> {
-                        // Show video player when stream is available
-                        AndroidView(
-                            factory = { ctx ->
-                                PlayerView(ctx).apply {
-                                    this.player = exoPlayer
-                                    useController = true
-                                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-                                    
-                                    // Customize controller
-                                    setShowBuffering(PlayerView.SHOW_BUFFERING_WHEN_PLAYING)
+
+                        if (errorMessage != null) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Error,
+                                    null,
+                                    tint = Color.Red,
+                                    modifier = Modifier.size(48.dp)
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    errorMessage!!,
+                                    color = Color.White,
+                                    textAlign = TextAlign.Center
+                                )
+                                Button(
+                                    onClick = { retryKey++ },
+                                    modifier = Modifier.padding(top = 8.dp)
+                                ) {
+                                    Text("Retry")
                                 }
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                            update = { view ->
-                                view.player = exoPlayer
                             }
-                        )
-                    }
-                    else -> {
-                        // Fallback: show not available
-                        Column(
-                            modifier = Modifier.fillMaxSize(),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ErrorOutline,
-                                contentDescription = "No stream",
-                                tint = Color.White.copy(alpha = 0.5f),
-                                modifier = Modifier.size(64.dp)
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = "No stream available",
-                                color = Color.White.copy(alpha = 0.7f),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
                         }
                     }
                 }
-                
-                // Fullscreen button overlay
+
+                // Fullscreen button
                 IconButton(
                     onClick = { isFullscreen = !isFullscreen },
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(8.dp)
+                        .background(Color.Black.copy(0.4f), CircleShape)
                 ) {
                     Icon(
                         imageVector = if (isFullscreen) Icons.Default.FullscreenExit else Icons.Default.Fullscreen,
-                        contentDescription = if (isFullscreen) "Exit Fullscreen" else "Fullscreen",
+                        contentDescription = null,
                         tint = Color.White
                     )
                 }
-                
-                // Mute/Unmute button overlay (only show when muted or when user taps)
-                if (isMuted || showMuteOverlay) {
-                    IconButton(
-                        onClick = {
-                            isMuted = !isMuted
-                            exoPlayer?.volume = if (isMuted) 0f else 1f
-                            showMuteOverlay = false
-                        },
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(8.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                            contentDescription = if (isMuted) "Unmute" else "Mute",
-                            tint = Color.White.copy(alpha = 0.7f),
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
             }
-            
+
             if (!isFullscreen) {
                 Spacer(modifier = Modifier.height(24.dp))
-                
+
                 // LIVE Badge and Title
                 Column(
                     modifier = Modifier
@@ -418,7 +370,7 @@ fun LiveSteamScreen(navController: NavController) {
                     Surface(
                         modifier = Modifier.padding(bottom = 16.dp),
                         shape = RoundedCornerShape(20.dp),
-                        color = if (isStreamAvailable) accent else Color.Gray
+                        color =  accent
                     ) {
                         Row(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
@@ -429,7 +381,7 @@ fun LiveSteamScreen(navController: NavController) {
                                 modifier = Modifier
                                     .size(8.dp)
                                     .background(
-                                        if (isStreamAvailable) Color.Red else Color.White.copy(alpha = 0.5f), 
+                                        Color.Red,
                                         CircleShape
                                     )
                             )
@@ -441,26 +393,26 @@ fun LiveSteamScreen(navController: NavController) {
                             )
                         }
                     }
-                    
+
                     // Title
                     Text(
-                        text = "Dennery FM Live Stream",
+                        text = stringResource(R.string.abc_fm_live_stream),
                         color = primaryTextColor,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.headlineMedium,
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
-                    
+
                     // Subtitle
                     Text(
-                        text = "Watch live broadcasts and special events",
+                        text = stringResource(R.string.watch_live_broadcasts_and_special_events),
                         color = secondaryTextColor,
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                
+
                 Spacer(modifier = Modifier.weight(1f))
-                
+
                 // Bottom Controls
                 Row(
                     modifier = Modifier
@@ -484,7 +436,7 @@ fun LiveSteamScreen(navController: NavController) {
                             modifier = Modifier.size(32.dp)
                         )
                     }
-                    
+
                     // Play/Pause Button
                     Box(
                         modifier = Modifier
@@ -506,7 +458,7 @@ fun LiveSteamScreen(navController: NavController) {
                             modifier = Modifier.size(36.dp)
                         )
                     }
-                    
+
                     // Volume Button
                     IconButton(
                         onClick = {
@@ -516,7 +468,7 @@ fun LiveSteamScreen(navController: NavController) {
                         modifier = Modifier.size(48.dp)
                     ) {
                         Icon(
-                            imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                            imageVector = if (isMuted) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
                             contentDescription = if (isMuted) "Unmute" else "Mute",
                             tint = Color.White,
                             modifier = Modifier.size(32.dp)

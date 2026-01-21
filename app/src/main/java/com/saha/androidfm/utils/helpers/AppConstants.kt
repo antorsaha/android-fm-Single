@@ -7,7 +7,7 @@ object AppConstants{
     const val STATION_NAME = "Dennery FM"
     
     // Live Stream Video URL
-    const val LIVE_STREAM_VIDEO_URL = "https://broadcast.denneryfm.com:5443/LiveApp/streams/TX4JtCSfc98m21875890490519672.m3u8"
+    const val LIVE_STREAM_VIDEO_URL = "https://nmxlive.akamaized.net/hls/live/529965/Live_1/index.m3u8"
 
     const val NEWS_URL = "https://www.dennery.fm/news/"
     const val SCHEDULE_URL = "https://www.dennery.fm/mobileappschedule/"

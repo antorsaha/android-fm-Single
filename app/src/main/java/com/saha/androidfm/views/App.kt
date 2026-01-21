@@ -103,7 +103,7 @@ fun App() {
     ) {
 
         composable("profile") {
-            LiveSteamScreen(navController)
+            LiveSteamScreen()
         }
 
         composable<NavigationWrapper>(
