@@ -1,11 +1,12 @@
 package com.saha.androidfm.views.screens.homeScreen
 
+import android.annotation.SuppressLint
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -42,55 +43,48 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.saha.androidfm.R
 import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
-import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.utils.helpers.AppHelper
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.AudioVisualizerBars
-import com.saha.androidfm.views.components.CircularAnimatedImage
 import com.saha.androidfm.views.components.HeightGap
+import com.saha.androidfm.views.components.WidthGap
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-private const val TAG = "HomeScreenContent"
-
+@SuppressLint("DefaultLocale")
 @Composable
 fun RadioScreen(
-    navController: NavController,
-    parentNavController: NavController,
     radioPlayerViewModel: RadioPlayerViewModel
 ) {
     val context = LocalContext.current
     val isPlaying by radioPlayerViewModel.isPlaying.collectAsState()
     val sleepTimerRemaining by radioPlayerViewModel.sleepTimerRemainingMillis.collectAsState()
     val coroutineScope = rememberCoroutineScope()
-    
+
     // Separate state for animations - updates with delay after actual playback state changes
     var isAnimating by remember { mutableStateOf(isPlaying) }
     var showSleepTimerCover by remember { mutableStateOf(false) }
-    
+
     // Update animation state when playback state actually changes
     LaunchedEffect(isPlaying) {
         // Add a small delay to ensure the actual playback state is confirmed
         delay(100) // 100ms delay to match actual playback state
         isAnimating = isPlaying
     }
-    
-    // painterResource is already optimized and cached by Compose internally
-    val imagePainter = painterResource(R.drawable.img_denneryfm)
 
     Box(
         modifier = Modifier
@@ -112,32 +106,60 @@ fun RadioScreen(
                 HeightGap(16.dp)
 
                 Text(
-                    text = AppConstants.STATION_NAME,
+                    text = stringResource(R.string.app_name),
                     style = MaterialTheme.typography.titleMedium,
                     color = secondaryTextColor,
                 )
 
-                HeightGap(32.dp)
+                HeightGap(56.dp)
 
 
                 Surface(
-                    modifier = Modifier.size(232.dp),
-                    shape = RoundedCornerShape(32.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(136.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = backgroundColor,
                     tonalElevation = 6.dp,   // Material 3
                     shadowElevation = 6.dp,
                     border = BorderStroke(0.2.dp, secondaryTextColor)
-                ){
-                    CircularAnimatedImage(
-                        painter = imagePainter,
-                        isPlaying = isAnimating,
-                        modifier = Modifier.fillMaxSize()
-                            .padding(16.dp),
-                        imageSize = 200.dp,
-                        animationDuration = 5000, // 5 seconds per rotation (slow)
-                        repetitions = 2,
-                        contentDescription = "Spinning image"
-                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(R.drawable.icon_image),
+                            contentDescription = "App Icon",
+                            modifier = Modifier
+                                .size(120.dp)
+
+                        )
+
+                        WidthGap(16.dp)
+
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.app_name),
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            HeightGap(4.dp)
+
+                            Text(
+                                text = stringResource(R.string.app_description),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = secondaryTextColor
+                            )
+                        }
+
+
+                    }
+
                 }
 
 
@@ -168,7 +190,7 @@ fun RadioScreen(
                     .padding(horizontal = 24.dp)
             )
 
-            HeightGap(24.dp)
+            HeightGap(40.dp)
 
             // Control Icons
             Row(

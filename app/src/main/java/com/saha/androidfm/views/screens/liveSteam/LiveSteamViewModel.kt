@@ -1,4 +1,4 @@
-package com.saha.androidfm.views.screens.lifeSteam
+package com.saha.androidfm.views.screens.liveSteam
 
 import android.app.Application
 import android.net.Uri

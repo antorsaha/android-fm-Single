@@ -1,6 +1,6 @@
 @file:kotlin.OptIn(ExperimentalMaterial3Api::class)
 
-package com.saha.androidfm.views.screens.lifeSteam
+package com.saha.androidfm.views.screens.liveSteam
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
