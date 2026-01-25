@@ -11,13 +11,14 @@ import android.graphics.BitmapFactory
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import androidx.core.app.ServiceCompat
-import androidx.core.app.NotificationCompat
-import androidx.media3.common.Player
-import androidx.media3.exoplayer.ExoPlayer
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.ServiceCompat
+import androidx.core.graphics.scale
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
 import com.saha.androidfm.MainActivity
 import com.saha.androidfm.R
 
@@ -61,13 +62,6 @@ class RadioPlayerService : Service() {
     }
 
     private fun initializeMediaSession() {
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(
-            this,
-            0,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
 
         mediaSession = MediaSessionCompat(this, "RadioPlayerService").apply {
             setCallback(object : MediaSessionCompat.Callback() {
@@ -81,8 +75,11 @@ class RadioPlayerService : Service() {
 
                 override fun onStop() {
                     exoPlayer?.stop()
-                    stopForeground(true)
-                    stopSelf()
+                    ServiceCompat.stopForeground(
+                        this@RadioPlayerService,
+                        ServiceCompat.STOP_FOREGROUND_REMOVE
+                    )
+                    this@RadioPlayerService.stopSelf()
                 }
             })
             isActive = true
@@ -204,30 +201,24 @@ class RadioPlayerService : Service() {
 
     private fun getAppLogoBitmap(): Bitmap? {
         return try {
-            // Try to load the station logo (img_denneryfm) first
             val options = BitmapFactory.Options().apply {
                 inJustDecodeBounds = false
             }
-            val bitmap = BitmapFactory.decodeResource(resources, R.drawable.img_denneryfm, options)
-            
+            val bitmap = BitmapFactory.decodeResource(resources, R.drawable.icon_image, options)
+
             // Scale down if too large (notifications work best with 256x256 or smaller)
             if (bitmap != null && (bitmap.width > 256 || bitmap.height > 256)) {
-                val scaledBitmap = Bitmap.createScaledBitmap(
-                    bitmap,
-                    256,
-                    256,
-                    true
-                )
+                val scaledBitmap = bitmap.scale(256, 256)
                 bitmap.recycle()
                 scaledBitmap
             } else {
                 bitmap
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             // Fallback to launcher icon if station logo fails
             try {
                 BitmapFactory.decodeResource(resources, R.drawable.ic_launcher_foreground)
-            } catch (e2: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }
@@ -254,9 +245,10 @@ class RadioPlayerService : Service() {
                     exoPlayer?.play()
                 }
             }
+
             ACTION_STOP -> {
                 exoPlayer?.stop()
-                stopForeground(true)
+                ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
                 stopSelf()
             }
         }

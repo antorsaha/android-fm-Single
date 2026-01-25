@@ -4,7 +4,7 @@ object AppConstants{
 
     const val STATION_SEAM_URL = "http://118.179.219.244:8000/;?n=d70ecddb2aebf420177c"
     const val STATION_FREQUENCY = "88.9"
-    const val STATION_NAME = "Dennery FM"
+    const val STATION_NAME = "ABC FM"
     
     // Live Stream Video URL
     const val LIVE_STREAM_VIDEO_URL = "https://nmxlive.akamaized.net/hls/live/529965/Live_1/index.m3u8"
