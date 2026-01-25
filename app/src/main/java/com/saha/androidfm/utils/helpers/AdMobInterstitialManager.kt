@@ -154,7 +154,7 @@ class AdMobInterstitialManager(private val context: android.content.Context) {
     /**
      * Checks if an ad is currently loaded and ready to show.
      */
-    fun isAdLoaded(): Boolean {
+    /*fun isAdLoaded(): Boolean {
         return interstitialAd != null
-    }
+    }*/
 }
