@@ -11,6 +11,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.Firebase
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.analytics.analytics
 import com.saha.androidfm.ui.theme.AndroidFmTheme
 import com.saha.androidfm.utils.helpers.AppHelper
 import com.saha.androidfm.views.App
@@ -29,6 +32,8 @@ class MainActivity : ComponentActivity() {
             // Permission denied, user will need to grant it manually
         }
     }
+
+    private lateinit var analytics: FirebaseAnalytics
     
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +45,9 @@ class MainActivity : ComponentActivity() {
                 notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
+
+        // Obtain the FirebaseAnalytics instance.
+        analytics = Firebase.analytics
         
         setContent {
             val systemUiController = rememberSystemUiController()

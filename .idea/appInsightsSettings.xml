@@ -22,10 +22,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.saha.androidfm" />
+                  <option name="mobileSdkAppId" value="1:865013723294:android:d53d490fd963078672cb8f" />
+                  <option name="projectId" value="codecanoyonprojects" />
+                  <option name="projectNumber" value="865013723294" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
