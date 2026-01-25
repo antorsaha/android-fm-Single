@@ -7,8 +7,10 @@ package com.saha.androidfm.utils.helpers
  * 
  * @property ADMOB Google AdMob ad network
  * @property META Meta (Facebook) Audience Network
+ * @property UNITY Unity Ads network
  */
 enum class AdNetwork {
     ADMOB,
-    META
+    META,
+    UNITY
 }

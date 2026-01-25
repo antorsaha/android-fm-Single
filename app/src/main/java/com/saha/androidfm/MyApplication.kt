@@ -17,6 +17,10 @@ class MyApplication: Application() {
                 // Meta SDK is initialized automatically when first ad is loaded
                 // No explicit initialization needed
             }
+            AdNetwork.UNITY -> {
+                // Unity Ads SDK is initialized in UnityInterstitialManager
+                // No explicit initialization needed here
+            }
             AdNetwork.ADMOB -> {
                 // Initialize AdMob SDK
                 MobileAds.initialize(this) { initializationStatus ->

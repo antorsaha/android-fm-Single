@@ -37,9 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import android.app.Activity
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -49,6 +51,8 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.facebook.ads.AdView as MetaAdView
 import com.facebook.ads.AdSize as MetaAdSize
+import com.unity3d.services.banners.BannerView
+import com.unity3d.services.banners.UnityBannerSize
 import com.saha.androidfm.data.enums.Screen
 import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
@@ -66,6 +70,8 @@ object HomeScreenRoute
 @Composable
 fun HomeScreen(navController: NavController) {
     val radioPlayerViewModel: RadioPlayerViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val activity = context as? Activity
 
     val home = Screen("home", "Radio", Icons.Default.Radio)
     val history = Screen("history", "Live Stream", Icons.Default.VideoCameraFront)
@@ -102,36 +108,58 @@ fun HomeScreen(navController: NavController) {
 
                     if (shouldShowAd) {
                         // Show banner ad based on selected ad network
-                        if (AppConstants.AD_NETWORK == AdNetwork.META) {
-                            // Meta (Facebook) Banner Ad
-                            AndroidView(
-                                factory = { context ->
-                                    MetaAdView(
-                                        context,
-                                        AppConstants.getBannerAdUnitId(),
-                                        MetaAdSize.BANNER_HEIGHT_50
-                                    ).apply {
-                                        loadAd()
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
-                        } else {
-                            // AdMob Banner Ad
-                            AndroidView(
-                                factory = { context ->
-                                    AdView(context).apply {
-                                        adUnitId = AppConstants.getBannerAdUnitId()
-                                        setAdSize(AdSize.BANNER)
-                                        loadAd(AdRequest.Builder().build())
-                                    }
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 8.dp)
-                            )
+                        when (AppConstants.AD_NETWORK) {
+                            AdNetwork.META -> {
+                                // Meta (Facebook) Banner Ad
+                                AndroidView(
+                                    factory = { context ->
+                                        MetaAdView(
+                                            context,
+                                            AppConstants.getBannerAdUnitId(),
+                                            MetaAdSize.BANNER_HEIGHT_50
+                                        ).apply {
+                                            loadAd()
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
+                            AdNetwork.UNITY -> {
+                                // Unity Ads Banner
+                                if (activity != null) {
+                                    AndroidView(
+                                        factory = { ctx ->
+                                            BannerView(
+                                                activity,
+                                                AppConstants.getBannerAdUnitId(),
+                                                UnityBannerSize(320, 50)
+                                            ).apply {
+                                                load()
+                                            }
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                                    )
+                                }
+                            }
+                            else -> {
+                                // AdMob Banner Ad
+                                AndroidView(
+                                    factory = { context ->
+                                        AdView(context).apply {
+                                            adUnitId = AppConstants.getBannerAdUnitId()
+                                            setAdSize(AdSize.BANNER)
+                                            loadAd(AdRequest.Builder().build())
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                                )
+                            }
                         }
                     }
 

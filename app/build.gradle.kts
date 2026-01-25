@@ -114,5 +114,8 @@ dependencies {
     
     // Meta (Facebook) Ads
     implementation("com.facebook.android:audience-network-sdk:6.16.0")
+    
+    // Unity Ads
+    implementation("com.unity3d.ads:unity-ads:4.12.1")
 
 }

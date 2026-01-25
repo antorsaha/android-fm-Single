@@ -37,11 +37,12 @@ interface AdManager {
  * Factory function to create the appropriate AdManager based on AppConstants.AD_NETWORK.
  * 
  * @param context The application context
- * @return An AdManager instance (either AdMobInterstitialManager or MetaInterstitialManager)
+ * @return An AdManager instance (AdMobInterstitialManager, MetaInterstitialManager, or UnityInterstitialManager)
  */
 fun createAdManager(context: Context): AdManager {
     return when (AppConstants.AD_NETWORK) {
         AdNetwork.META -> MetaInterstitialManagerWrapper(context)
+        AdNetwork.UNITY -> UnityInterstitialManagerWrapper(context)
         AdNetwork.ADMOB -> AdMobInterstitialManagerWrapper(context)
     }
 }
@@ -71,6 +72,25 @@ private class AdMobInterstitialManagerWrapper(context: Context) : AdManager {
  */
 private class MetaInterstitialManagerWrapper(context: Context) : AdManager {
     private val manager = MetaInterstitialManager(context)
+    
+    override fun loadAd() {
+        manager.loadAd()
+    }
+    
+    override fun showAd(activity: Activity, onAdClosed: () -> Unit): Boolean {
+        return manager.showAd(activity, onAdClosed)
+    }
+    
+    override fun destroy() {
+        manager.destroy()
+    }
+}
+
+/**
+ * Wrapper class to make UnityInterstitialManager conform to AdManager interface.
+ */
+private class UnityInterstitialManagerWrapper(context: Context) : AdManager {
+    private val manager = UnityInterstitialManager(context)
     
     override fun loadAd() {
         manager.loadAd()

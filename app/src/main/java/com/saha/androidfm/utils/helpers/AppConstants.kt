@@ -23,7 +23,7 @@ object AppConstants{
     const val TIKTOK_URL = "https://www.tiktok.com/@denneryfm"
     
     // Ad Network Configuration
-    // Change this to switch between ad networks: AdNetwork.ADMOB or AdNetwork.META
+    // Change this to switch between ad networks: AdNetwork.ADMOB, AdNetwork.META, or AdNetwork.UNITY
     val AD_NETWORK = AdNetwork.ADMOB
     
     // AdMob Configuration
@@ -37,10 +37,18 @@ object AppConstants{
     const val META_BANNER_PLACEMENT_ID = "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID" // Test placement ID
     const val META_INTERSTITIAL_PLACEMENT_ID = "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID" // Test placement ID
     
+    // Unity Ads Configuration
+    // Replace with your actual Game ID and Placement IDs from Unity Ads dashboard
+    const val UNITY_GAME_ID = "YOUR_UNITY_GAME_ID" // Your Unity Ads Game ID
+    const val UNITY_BANNER_PLACEMENT_ID = "Banner_Android" // Banner placement ID
+    const val UNITY_INTERSTITIAL_PLACEMENT_ID = "Interstitial_Android" // Interstitial placement ID
+    const val UNITY_TEST_MODE = true // Set to false for production
+    
     // Helper functions to get ad unit IDs based on selected network
     fun getBannerAdUnitId(): String {
         return when (AD_NETWORK) {
             AdNetwork.META -> META_BANNER_PLACEMENT_ID
+            AdNetwork.UNITY -> UNITY_BANNER_PLACEMENT_ID
             AdNetwork.ADMOB -> ADMOB_BANNER_AD_UNIT_ID
         }
     }
@@ -48,6 +56,7 @@ object AppConstants{
     fun getInterstitialAdUnitId(): String {
         return when (AD_NETWORK) {
             AdNetwork.META -> META_INTERSTITIAL_PLACEMENT_ID
+            AdNetwork.UNITY -> UNITY_INTERSTITIAL_PLACEMENT_ID
             AdNetwork.ADMOB -> ADMOB_INTERSTITIAL_AD_UNIT_ID
         }
     }
