@@ -79,6 +79,7 @@ import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
+import com.saha.androidfm.utils.helpers.AdMobInterstitialManager
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.utils.helpers.M3UParser
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
@@ -109,6 +110,14 @@ fun LiveSteamScreen(
 
     // Observe radio player state
     val isRadioPlaying by radioPlayerViewModel.isPlaying.collectAsState()
+    
+    // Initialize AdMob Interstitial Ad Manager
+    val adManager = remember { AdMobInterstitialManager(context) }
+    
+    // Load ad when screen is created
+    LaunchedEffect(Unit) {
+        adManager.loadAd()
+    }
 
     // Helper function to create MediaSource with proper configuration
     fun createMediaSource(ctx: android.content.Context, uri: Uri): MediaSource {
@@ -444,9 +453,20 @@ fun LiveSteamScreen(
                             .background(accent, CircleShape)
                             .clickable {
                                 if (isPlaying) {
+                                    // If already playing, just pause (no ad needed)
                                     exoPlayer?.pause()
                                 } else {
-                                    exoPlayer?.play()
+                                    // If not playing, show ad first, then play after ad closes
+                                    activity?.let {
+                                        adManager.showAd(it) {
+                                            // This callback executes after ad is closed
+                                            // Now play the video
+                                            exoPlayer?.play()
+                                        }
+                                    } ?: run {
+                                        // If no activity context, play directly
+                                        exoPlayer?.play()
+                                    }
                                 }
                             },
                         contentAlignment = Alignment.Center

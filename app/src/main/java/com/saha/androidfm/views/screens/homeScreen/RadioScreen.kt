@@ -57,6 +57,7 @@ import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
+import com.saha.androidfm.utils.helpers.AdMobInterstitialManager
 import com.saha.androidfm.utils.helpers.AppHelper
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.AudioVisualizerBars
@@ -71,6 +72,7 @@ fun RadioScreen(
     radioPlayerViewModel: RadioPlayerViewModel
 ) {
     val context = LocalContext.current
+    val activity = context as? android.app.Activity
     val isPlaying by radioPlayerViewModel.isPlaying.collectAsState()
     val sleepTimerRemaining by radioPlayerViewModel.sleepTimerRemainingMillis.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -78,6 +80,14 @@ fun RadioScreen(
     // Separate state for animations - updates with delay after actual playback state changes
     var isAnimating by remember { mutableStateOf(isPlaying) }
     var showSleepTimerCover by remember { mutableStateOf(false) }
+    
+    // Initialize AdMob Interstitial Ad Manager
+    val adManager = remember { AdMobInterstitialManager(context) }
+    
+    // Load ad when screen is created
+    LaunchedEffect(Unit) {
+        adManager.loadAd()
+    }
 
     // Update animation state when playback state actually changes
     LaunchedEffect(isPlaying) {
@@ -222,8 +232,27 @@ fun RadioScreen(
                         ) {
                             // Launch in coroutine scope to ensure non-blocking
                             coroutineScope.launch {
-                                isAnimating = !isAnimating
-                                radioPlayerViewModel.togglePlayPause()
+                                if (isPlaying) {
+                                    // If already playing, just pause (no ad needed)
+                                    isAnimating = false
+                                    radioPlayerViewModel.togglePlayPause()
+                                } else {
+                                    // If not playing, show ad first, then play after ad closes
+                                    activity?.let {
+                                        adManager.showAd(it) {
+                                            // This callback executes after ad is closed
+                                            // Now play the audio
+                                            coroutineScope.launch {
+                                                isAnimating = true
+                                                radioPlayerViewModel.togglePlayPause()
+                                            }
+                                        }
+                                    } ?: run {
+                                        // If no activity context, play directly
+                                        isAnimating = true
+                                        radioPlayerViewModel.togglePlayPause()
+                                    }
+                                }
                             }
                         },
                     contentAlignment = Alignment.Center
