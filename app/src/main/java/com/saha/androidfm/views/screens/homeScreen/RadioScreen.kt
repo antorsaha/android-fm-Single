@@ -57,7 +57,8 @@ import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
-import com.saha.androidfm.utils.helpers.AdMobInterstitialManager
+import com.saha.androidfm.utils.helpers.AdManager
+import com.saha.androidfm.utils.helpers.createAdManager
 import com.saha.androidfm.utils.helpers.AppHelper
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.components.AudioVisualizerBars
@@ -81,8 +82,8 @@ fun RadioScreen(
     var isAnimating by remember { mutableStateOf(isPlaying) }
     var showSleepTimerCover by remember { mutableStateOf(false) }
     
-    // Initialize AdMob Interstitial Ad Manager
-    val adManager = remember { AdMobInterstitialManager(context) }
+    // Initialize unified Ad Manager (supports both AdMob and Meta)
+    val adManager = remember { createAdManager(context) }
     
     // Load ad when screen is created
     LaunchedEffect(Unit) {

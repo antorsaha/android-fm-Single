@@ -47,11 +47,14 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.facebook.ads.AdView as MetaAdView
+import com.facebook.ads.AdSize as MetaAdSize
 import com.saha.androidfm.data.enums.Screen
 import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
 import com.saha.androidfm.ui.theme.surface
+import com.saha.androidfm.utils.helpers.AdNetwork
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.screens.SettingScreen
@@ -98,18 +101,38 @@ fun HomeScreen(navController: NavController) {
                             currentDestination?.route == history.route
 
                     if (shouldShowAd) {
-                        AndroidView(
-                            factory = { context ->
-                                AdView(context).apply {
-                                    adUnitId = AppConstants.BANNER_AD_UNIT_ID
-                                    setAdSize(AdSize.BANNER)
-                                    loadAd(AdRequest.Builder().build())
-                                }
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
+                        // Show banner ad based on selected ad network
+                        if (AppConstants.AD_NETWORK == AdNetwork.META) {
+                            // Meta (Facebook) Banner Ad
+                            AndroidView(
+                                factory = { context ->
+                                    MetaAdView(
+                                        context,
+                                        AppConstants.getBannerAdUnitId(),
+                                        MetaAdSize.BANNER_HEIGHT_50
+                                    ).apply {
+                                        loadAd()
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        } else {
+                            // AdMob Banner Ad
+                            AndroidView(
+                                factory = { context ->
+                                    AdView(context).apply {
+                                        adUnitId = AppConstants.getBannerAdUnitId()
+                                        setAdSize(AdSize.BANNER)
+                                        loadAd(AdRequest.Builder().build())
+                                    }
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
                     }
 
                     FloatingBottomNavigationBar(

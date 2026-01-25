@@ -22,9 +22,33 @@ object AppConstants{
     const val INSTAGRAM_URL = "https://www.instagram.com/denneryfm/"
     const val TIKTOK_URL = "https://www.tiktok.com/@denneryfm"
     
+    // Ad Network Configuration
+    // Change this to switch between ad networks: AdNetwork.ADMOB or AdNetwork.META
+    val AD_NETWORK = AdNetwork.ADMOB
+    
     // AdMob Configuration
     // Replace with your actual values from AdMob console
     const val ADMOB_APPLICATION_ID = "ca-app-pub-3940256099942544~3347511713" // Test application ID
-    const val BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // Test banner ad unit
-    const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712" // Test interstitial ad unit
+    const val ADMOB_BANNER_AD_UNIT_ID = "ca-app-pub-3940256099942544/6300978111" // Test banner ad unit
+    const val ADMOB_INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712" // Test interstitial ad unit
+    
+    // Meta (Facebook) Ads Configuration
+    // Replace with your actual placement IDs from Meta Audience Network
+    const val META_BANNER_PLACEMENT_ID = "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID" // Test placement ID
+    const val META_INTERSTITIAL_PLACEMENT_ID = "IMG_16_9_APP_INSTALL#YOUR_PLACEMENT_ID" // Test placement ID
+    
+    // Helper functions to get ad unit IDs based on selected network
+    fun getBannerAdUnitId(): String {
+        return when (AD_NETWORK) {
+            AdNetwork.META -> META_BANNER_PLACEMENT_ID
+            AdNetwork.ADMOB -> ADMOB_BANNER_AD_UNIT_ID
+        }
+    }
+    
+    fun getInterstitialAdUnitId(): String {
+        return when (AD_NETWORK) {
+            AdNetwork.META -> META_INTERSTITIAL_PLACEMENT_ID
+            AdNetwork.ADMOB -> ADMOB_INTERSTITIAL_AD_UNIT_ID
+        }
+    }
 }

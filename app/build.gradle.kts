@@ -111,5 +111,8 @@ dependencies {
 
     // Google AdMob
     implementation("com.google.android.gms:play-services-ads:23.0.0")
+    
+    // Meta (Facebook) Ads
+    implementation("com.facebook.android:audience-network-sdk:6.16.0")
 
 }

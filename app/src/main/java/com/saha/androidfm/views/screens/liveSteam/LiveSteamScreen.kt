@@ -79,7 +79,8 @@ import com.saha.androidfm.ui.theme.accent
 import com.saha.androidfm.ui.theme.backgroundColor
 import com.saha.androidfm.ui.theme.primaryTextColor
 import com.saha.androidfm.ui.theme.secondaryTextColor
-import com.saha.androidfm.utils.helpers.AdMobInterstitialManager
+import com.saha.androidfm.utils.helpers.AdManager
+import com.saha.androidfm.utils.helpers.createAdManager
 import com.saha.androidfm.utils.helpers.AppConstants
 import com.saha.androidfm.utils.helpers.M3UParser
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
@@ -111,8 +112,8 @@ fun LiveSteamScreen(
     // Observe radio player state
     val isRadioPlaying by radioPlayerViewModel.isPlaying.collectAsState()
     
-    // Initialize AdMob Interstitial Ad Manager
-    val adManager = remember { AdMobInterstitialManager(context) }
+    // Initialize unified Ad Manager (supports both AdMob and Meta)
+    val adManager = remember { createAdManager(context) }
     
     // Load ad when screen is created
     LaunchedEffect(Unit) {

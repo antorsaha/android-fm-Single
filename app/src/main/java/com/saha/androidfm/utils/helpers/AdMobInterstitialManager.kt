@@ -56,7 +56,7 @@ class AdMobInterstitialManager(private val context: android.content.Context) {
         
         InterstitialAd.load(
             context,
-            AppConstants.INTERSTITIAL_AD_UNIT_ID,
+            AppConstants.ADMOB_INTERSTITIAL_AD_UNIT_ID,
             adRequest,
             object : InterstitialAdLoadCallback() {
                 override fun onAdLoaded(ad: InterstitialAd) {
