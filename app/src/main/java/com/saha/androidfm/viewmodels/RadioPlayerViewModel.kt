@@ -41,24 +41,53 @@ import com.saha.androidfm.utils.helpers.AppConstants
 
 private const val TAG = "RadioPlayerViewModel"
 
+/**
+ * ViewModel for managing radio player state and playback.
+ * 
+ * This ViewModel handles:
+ * - ExoPlayer initialization and lifecycle management
+ * - Radio stream playback (HTTP, HTTPS, M3U, M3U8, local files)
+ * - Playback state management (playing, paused, buffering, error)
+ * - Notification service integration for background playback
+ * - Sleep timer functionality
+ * - Error handling and recovery
+ * 
+ * The ViewModel uses Hilt for dependency injection and manages the player
+ * lifecycle independently of UI components.
+ */
 @HiltViewModel
 class RadioPlayerViewModel @Inject constructor(
     application: Application
 ) : AndroidViewModel(application) {
 
+    // ExoPlayer instance for audio playback
     private var exoPlayer: ExoPlayer? = null
+    
+    // Weak reference to the foreground service for notifications
     private var radioPlayerServiceRef: WeakReference<RadioPlayerService>? = null
+    
+    // Flag indicating if the service is currently bound
     private var serviceBound = false
 
+    /**
+     * Service connection callback for binding to RadioPlayerService.
+     * 
+     * This connection allows the ViewModel to communicate with the foreground
+     * service that displays playback notifications and manages background playback.
+     */
     private val serviceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             val binder = service as RadioPlayerService.LocalBinder
             val service = binder.getService()
             radioPlayerServiceRef = WeakReference(service)
             serviceBound = true
+            
+            // Transfer player instance to service for notification control
             exoPlayer?.let { player ->
                 service.setPlayer(player)
             }
+            
+            // Update service with current station info
             _stationName.value?.let { stationName ->
                 service.updateStationInfo(stationName)
             }
@@ -66,6 +95,7 @@ class RadioPlayerViewModel @Inject constructor(
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
+            // Service disconnected - clear references
             radioPlayerServiceRef = null
             serviceBound = false
             Log.d(TAG, "Service disconnected")
@@ -101,19 +131,34 @@ class RadioPlayerViewModel @Inject constructor(
 
     private var sleepTimerJob: Job? = null
 
+    /**
+     * Initialize the ViewModel by creating the ExoPlayer instance.
+     */
     init {
         initializePlayer()
     }
 
+    /**
+     * Initializes the ExoPlayer instance with proper configuration for radio streaming.
+     * 
+     * The player is configured to:
+     * - Pause automatically when audio becomes noisy (e.g., headphones unplugged)
+     * - Not repeat playback (live streams don't loop)
+     * - Play at full volume
+     * - Handle various playback states and errors
+     */
     private fun initializePlayer() {
         try {
             exoPlayer = ExoPlayer.Builder(getApplication())
-                .setHandleAudioBecomingNoisy(true) // Pause when audio becomes noisy (e.g., headphones unplugged)
+                // Pause when audio becomes noisy (e.g., headphones unplugged, call starts)
+                .setHandleAudioBecomingNoisy(true)
                 .build()
                 .apply {
-                    // Configure for live streaming
+                    // Configure for live streaming (no repeat, full volume)
                     repeatMode = Player.REPEAT_MODE_OFF
                     volume = 1.0f
+                    
+                    // Add listener to track playback state changes
                     addListener(object : Player.Listener {
                         override fun onPlaybackStateChanged(playbackState: Int) {
                             when (playbackState) {
@@ -189,29 +234,44 @@ class RadioPlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Starts playback of the radio station.
+     * 
+     * This method:
+     * - Loads the station URL from AppConstants
+     * - Determines the URL type (HTTP/HTTPS, M3U, local file)
+     * - Creates appropriate MediaItem or MediaSource
+     * - Starts playback and updates UI state
+     * - Handles errors gracefully
+     * 
+     * Supports multiple URL formats:
+     * - HTTP/HTTPS direct stream URLs
+     * - M3U/M3U8 playlist files (parsed to extract stream URL)
+     * - Local file paths
+     */
     @OptIn(UnstableApi::class)
     fun play() {
-
         val url = AppConstants.STATION_SEAM_URL
         val stationName = AppConstants.STATION_NAME
 
         viewModelScope.launch {
             try {
+                // Clear any previous errors
                 _errorMessage.value = null
                 _playbackError.value = null
 
                 Log.d(TAG, "Attempting to play URL: $url")
 
-                // Check if it's a local file or URL
+                // Determine URL type and create appropriate media item
                 val mediaItem = if (url.startsWith("http://") || url.startsWith("https://")) {
-                    // HTTP/HTTPS stream URL
+                    // HTTP/HTTPS direct stream URL
                     Log.d(TAG, "Creating media item from HTTP/HTTPS URL")
                     createMediaItemFromUrl(url, stationName)
                 } else if (url.endsWith(".m3u") || url.endsWith(".m3u8")) {
-                    // M3U file - parse it
+                    // M3U playlist file - parse it to extract stream URL
                     Log.d(TAG, "Parsing M3U file")
                     parseAndPlayM3U(url, stationName)
-                    return@launch
+                    return@launch // Early return - parseAndPlayM3U handles playback
                 } else {
                     // Try as local file path
                     Log.d(TAG, "Creating media item from local file")
@@ -280,16 +340,26 @@ class RadioPlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Creates a MediaItem from an HTTP/HTTPS URL.
+     * 
+     * This method handles special characters in URLs (like semicolons) that might
+     * be lost during URI parsing. It attempts to preserve the original URL structure.
+     * 
+     * @param url The stream URL (HTTP or HTTPS)
+     * @param stationName Optional station name for metadata
+     * @return MediaItem if successful, null if URL parsing fails
+     */
     private fun createMediaItemFromUrl(url: String, stationName: String?): MediaItem? {
         return try {
             // Properly parse the URI to handle special characters like semicolons
-            // The semicolon in the URL path needs to be preserved
-            // Try parsing directly first
+            // Some radio stream URLs contain semicolons in the path that need to be preserved
             var uri = url.toUri()
             Log.d(TAG, "Original URL: $url")
             Log.d(TAG, "Parsed URI (first attempt): $uri")
             
             // If the URI doesn't preserve the semicolon, try encoding it
+            // This handles URLs like "http://example.com/;?n=param" where semicolon is part of path
             if (!uri.toString().contains(";") && url.contains(";")) {
                 // The semicolon might have been lost, try encoding the path
                 val encodedUrl = url.replace(";", "%3B")
@@ -324,6 +394,17 @@ class RadioPlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Creates a MediaSource for HTTP streaming with proper configuration.
+     * 
+     * This method sets up HTTP data source with:
+     * - Appropriate timeouts for live streaming
+     * - Headers for ICY metadata support (used by many radio streams)
+     * - Cross-protocol redirect support
+     * 
+     * @param uri The URI of the stream to play
+     * @return Configured MediaSource ready for playback
+     */
     @OptIn(UnstableApi::class)
     private fun createMediaSource(uri: Uri): MediaSource {
         val context = getApplication<Application>()
@@ -331,16 +412,17 @@ class RadioPlayerViewModel @Inject constructor(
         Log.d(TAG, "Creating MediaSource for URI: $uri")
 
         // Create HTTP data source factory with proper headers for streaming
+        // Radio streams often require specific headers and longer timeouts
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent("ExoPlayer/Media3")
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(30000) // Increased timeout to 30 seconds
-            .setReadTimeoutMs(30000) // Increased timeout to 30 seconds
+            .setAllowCrossProtocolRedirects(true) // Allow HTTP to HTTPS redirects
+            .setConnectTimeoutMs(30000) // 30 seconds - longer timeout for slow connections
+            .setReadTimeoutMs(30000) // 30 seconds - longer timeout for buffering
             .setDefaultRequestProperties(
                 mapOf(
-                    "Connection" to "keep-alive",
-                    "Accept" to "*/*",
-                    "Icy-MetaData" to "1",
+                    "Connection" to "keep-alive", // Keep connection alive for continuous streaming
+                    "Accept" to "*/*", // Accept any content type
+                    "Icy-MetaData" to "1", // Request ICY metadata (song titles, etc.)
                     "User-Agent" to "ExoPlayer/Media3"
                 )
             )
@@ -431,14 +513,29 @@ class RadioPlayerViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Pauses the currently playing stream.
+     */
     fun pause() {
         exoPlayer?.pause()
     }
 
+    /**
+     * Resumes playback of a paused stream.
+     */
     fun resume() {
         exoPlayer?.play()
     }
 
+    /**
+     * Stops playback completely and clears current station info.
+     * 
+     * This method:
+     * - Stops the player
+     * - Clears current URL and station name
+     * - Updates playing state
+     * - Stops the notification service
+     */
     fun stop() {
         exoPlayer?.stop()
         _currentUrl.value = null
@@ -447,13 +544,20 @@ class RadioPlayerViewModel @Inject constructor(
         stopNotificationService()
     }
 
+    /**
+     * Toggles between play and pause states.
+     * 
+     * If already playing, pauses.
+     * If paused and a URL is loaded, resumes.
+     * If no URL is loaded, starts playing from the beginning.
+     */
     fun togglePlayPause() {
         if (_isPlaying.value) {
             pause()
         } else {
             if (_currentUrl.value != null) {
                 resume()
-            }else{
+            } else {
                 play()
             }
         }
@@ -506,6 +610,14 @@ class RadioPlayerViewModel @Inject constructor(
         radioPlayerServiceRef = null
     }
 
+    /**
+     * Sets a sleep timer that will stop playback after the specified number of minutes.
+     * 
+     * The timer counts down and automatically stops playback when it reaches zero.
+     * Setting minutes to 0 or negative cancels any existing timer.
+     * 
+     * @param minutes Number of minutes until playback should stop (0 to cancel)
+     */
     fun setSleepTimer(minutes: Int) {
         sleepTimerJob?.cancel()
         if (minutes <= 0) {
@@ -516,13 +628,15 @@ class RadioPlayerViewModel @Inject constructor(
         val totalMillis = minutes * 60 * 1000L
         _sleepTimerRemainingMillis.value = totalMillis
 
+        // Start countdown timer
         sleepTimerJob = viewModelScope.launch {
             var remaining = totalMillis
             while (remaining > 0) {
-                delay(1000)
+                delay(1000) // Update every second
                 remaining -= 1000
                 _sleepTimerRemainingMillis.value = remaining
             }
+            // Timer finished - stop playback
             _sleepTimerRemainingMillis.value = null
             stop()
         }
@@ -537,16 +651,29 @@ class RadioPlayerViewModel @Inject constructor(
     }
 }
 
+/**
+ * Sealed class representing the current state of the radio player.
+ * 
+ * These states correspond to ExoPlayer's internal states and provide
+ * a clean way to represent playback status in the UI.
+ */
 sealed class PlayerState {
-    object Idle : PlayerState()
-    object Buffering : PlayerState()
-    object Ready : PlayerState()
-    object Playing : PlayerState()
-    object Paused : PlayerState()
-    object Ended : PlayerState()
-    object Error : PlayerState()
+    object Idle : PlayerState()      // Player is idle, no media loaded
+    object Buffering : PlayerState() // Player is buffering data
+    object Ready : PlayerState()     // Player is ready to play
+    object Playing : PlayerState()   // Player is currently playing
+    object Paused : PlayerState()    // Player is paused
+    object Ended : PlayerState()     // Playback has ended (rare for live streams)
+    object Error : PlayerState()     // An error occurred during playback
 }
 
+/**
+ * Data class representing a stream entry in an M3U playlist file.
+ * 
+ * @param url The stream URL
+ * @param name Optional stream name/title
+ * @param duration Optional duration in seconds (null for live streams)
+ */
 data class M3UStream(
     val url: String,
     val name: String? = null,

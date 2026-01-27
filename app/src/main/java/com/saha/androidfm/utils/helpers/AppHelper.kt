@@ -14,21 +14,50 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.saha.androidfm.R
 import com.saha.androidfm.data.enums.NetworkState
-import com.saha.fairdrivepartnerapp.utils.helper.CounterHelper
+import com.saha.androidfm.utils.helpers.CounterHelper
 import java.io.File
 import java.net.URLConnection
 import java.util.Calendar
 
 
+/**
+ * Utility object providing helper functions for common app operations.
+ * 
+ * This object contains static utility methods for:
+ * - Network state management
+ * - App sharing functionality
+ * - Social media link handling
+ * - Email and URL opening
+ * - Permission checking
+ * - File operations
+ * 
+ * All methods are thread-safe and can be called from any context.
+ */
 object AppHelper {
 
+    /**
+     * Current network connection state.
+     * 
+     * This state is managed internally and updated based on network connectivity changes.
+     * Possible values: CONNECTED, DISCONNECTED, UNKNOWN
+     */
     var isNetworkConnected by mutableStateOf(NetworkState.UNKNOWN)
 
-    //val isNetworkConnected = _isNetworkConnected.asStateFlow()
+    // Counter helper for managing network state transitions with delays
     private val counterHelper = CounterHelper()
+    
+    // Flag to track if this is the first network state check
     private var isFirstTime = true
 
 
+    /**
+     * Opens the app's settings page in the system settings.
+     * 
+     * This navigates the user to the detailed settings page for this app,
+     * where they can manage permissions, notifications, and other app settings.
+     * 
+     * @param context The context used to start the settings activity
+     */
     fun goToLocationSettings(context: Context) {
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
             data = Uri.fromParts("package", context.packageName, null)
@@ -36,10 +65,21 @@ object AppHelper {
         context.startActivity(intent)
     }
 
+    /**
+     * Determines the MIME type of a file based on its name/extension.
+     * 
+     * @param file The file to determine the MIME type for
+     * @return The MIME type string (e.g., "image/jpeg", "video/mp4") or null if unknown
+     */
     fun getMimeType(file: File): String? {
         return URLConnection.guessContentTypeFromName(file.name)
     }
 
+    /**
+     * Gets the current year as an integer.
+     * 
+     * @return The current year (e.g., 2026)
+     */
     fun getCurrentYear(): Int {
         return Calendar.getInstance().get(Calendar.YEAR)
     }
@@ -60,6 +100,16 @@ object AppHelper {
         }
     }
 
+    /**
+     * Opens the system share dialog to allow users to share the app with others.
+     * 
+     * The share message includes:
+     * - App name and tagline
+     * - Play Store download link
+     * - Encouraging message about the app
+     * 
+     * @param context The context used to start the share activity
+     */
     fun shareApp(context: Context) {
         try {
             val packageName = context.packageName
@@ -248,24 +298,42 @@ object AppHelper {
         }
     }
 
+    /**
+     * Updates the network connection state based on connectivity changes.
+     * 
+     * This method implements a state machine that manages network state transitions
+     * with debouncing to prevent rapid state changes. It uses a 1-second delay before
+     * processing state changes and a 3-second delay before resetting to UNKNOWN state.
+     * 
+     * State transitions:
+     * - CONNECTED -> DISCONNECTED: When connection is lost
+     * - DISCONNECTED -> CONNECTED: When connection is restored (then UNKNOWN after 3s)
+     * - UNKNOWN -> CONNECTED/DISCONNECTED: Based on current connectivity
+     * 
+     * @param isConnected True if network is currently connected, false otherwise
+     */
     fun setNetworkConnection(isConnected: Boolean) {
         Logger.d(tag = "HomeScreen", message = "setNetworkConnection: $isConnected")
         counterHelper.stopCountdown()
 
+        // Use 1-second delay to debounce rapid network state changes
         counterHelper.countdownTimer(seconds = 1, onStart = {
-
+            // No action needed on start
         }, onCountDownFinished = {
             when (isNetworkConnected) {
                 NetworkState.CONNECTED -> {
+                    // If we were connected and now disconnected, update state
                     if (!isConnected) {
                         isNetworkConnected = NetworkState.DISCONNECTED
                     }
                 }
 
                 NetworkState.DISCONNECTED -> {
+                    // If we were disconnected and now connected, update and reset after delay
                     if (isConnected) {
                         isNetworkConnected = NetworkState.CONNECTED
 
+                        // Reset to UNKNOWN after 3 seconds of stable connection
                         CounterHelper().countdownTimer(
                             seconds = 3,
                             onStart = {},
@@ -276,33 +344,30 @@ object AppHelper {
                 }
 
                 else -> {
+                    // Handle UNKNOWN state
                     Logger.d(tag = "HomeScreen", message = "isFirst time $isFirstTime")
                     if (!isFirstTime) {
+                        // Not the first check - process normally
                         if (isConnected) {
                             isNetworkConnected = NetworkState.CONNECTED
 
+                            // Reset to UNKNOWN after 3 seconds of stable connection
                             CounterHelper().countdownTimer(
                                 seconds = 3,
                                 onStart = {},
                                 onCountDownFinished = {
                                     isNetworkConnected = NetworkState.UNKNOWN
                                 })
-
-
                         } else {
                             isNetworkConnected = NetworkState.DISCONNECTED
                         }
-
                     } else {
+                        // First time check - only set disconnected if not connected
                         isFirstTime = false
-
                         if (!isConnected) {
                             isNetworkConnected = NetworkState.DISCONNECTED
                         }
                     }
-
-
-                    //isNetworkConnected = NetworkState.UNKNOWN
                 }
             }
         })

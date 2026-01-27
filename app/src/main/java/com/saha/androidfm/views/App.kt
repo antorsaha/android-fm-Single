@@ -61,18 +61,11 @@ import com.saha.androidfm.ui.theme.secondaryTextColor
 import com.saha.androidfm.ui.theme.surface
 import com.saha.androidfm.utils.helpers.AdNetwork
 import com.saha.androidfm.utils.helpers.AppConstants
-import com.saha.androidfm.utils.helpers.ConfirmationDialogSpec
-import com.saha.androidfm.utils.helpers.DialogManager
-import com.saha.androidfm.utils.helpers.ErrorDialogSpec
 import com.saha.androidfm.utils.helpers.LoadingManager
 import com.saha.androidfm.utils.helpers.PreferencesManager
-import com.saha.androidfm.utils.helpers.SuccessDialogSpec
 import com.saha.androidfm.utils.navigation.NavigationWrapper
 import com.saha.androidfm.viewmodels.RadioPlayerViewModel
 import com.saha.androidfm.views.dialogs.AppLoader
-import com.saha.androidfm.views.dialogs.IosConfirmationDialog
-import com.saha.androidfm.views.dialogs.IosErrorDialog
-import com.saha.androidfm.views.dialogs.IosSuccessDialog
 import com.saha.androidfm.views.screens.SettingScreen
 import com.saha.androidfm.views.screens.WebViewScreen
 import com.saha.androidfm.views.screens.WebViewScreenRoute
@@ -84,23 +77,45 @@ import com.saha.androidfm.views.screens.liveSteam.LiveSteamScreen
 import com.saha.androidfm.views.screens.onboarding.OnboardingScreen
 import com.saha.androidfm.views.screens.onboarding.OnboardingScreenRoute
 
+/**
+ * Main application composable that sets up the navigation structure and UI.
+ * 
+ * This is the root composable of the app that:
+ * - Manages navigation between screens using Jetpack Navigation
+ * - Displays a bottom navigation bar for main screens
+ * - Shows banner ads on Radio and Live Stream screens
+ * - Handles onboarding flow for first-time users
+ * - Manages global loading states and dialogs
+ * 
+ * The app uses a single-activity architecture with Compose Navigation,
+ * where all screens are composables managed by a NavHost.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App() {
+    // Navigation controller for managing screen transitions
     val navController = rememberNavController()
     val context = LocalContext.current
     val activity = context as? Activity
+    
+    // Preferences manager for storing app state (e.g., onboarding completion)
     val preferencesManager = remember { PreferencesManager.create(context) }
+    
+    // Global state manager for loading indicator
     val isLoading by LoadingManager.isLoading.collectAsState()
-    val centralDialogSpec by DialogManager.dialog.collectAsState()
+    
+    // Note: DialogManager is available but not currently used in App.kt
+    // Dialogs are handled at the screen level. This can be used for global dialogs if needed.
+    // val centralDialogSpec by DialogManager.dialog.collectAsState()
 
-    // Bottom navigation items
+    // Define bottom navigation items with icons and labels
     val home = Screen("radio", "Radio", Icons.Default.Radio)
     val history = Screen("liveStream", "Live Stream", Icons.Default.VideoCameraFront)
     val settings = Screen("settings", "More", Icons.Filled.Menu)
     val bottomNavItems = listOf(home, history, settings)
 
     // Get current route to determine if bottom navigation should be shown
+    // Bottom nav is only visible on main screens (Radio, Live Stream, Settings)
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRouteWrapper = currentBackStackEntry?.toRoute<NavigationWrapper>()
     val currentScreenName = currentRouteWrapper?.screenName
@@ -108,7 +123,8 @@ fun App() {
                               currentScreenName == LiveStreamScreenRoute::class.java.name || 
                               currentScreenName == SettingsScreenRoute::class.java.name
 
-    // Determine start destination based on onboarding completion
+    // Determine start destination based on onboarding completion status
+    // First-time users see onboarding, returning users go directly to Radio screen
     val startDestination = remember {
         if (preferencesManager.isOnboardingCompleted()) {
             NavigationWrapper(
@@ -123,9 +139,11 @@ fun App() {
         }
     }
 
-    val animationDuration = 500
-    val bottomNavAnimationDuration = 200
+    // Animation durations for screen transitions
+    val animationDuration = 500 // Duration for screen slide animations
+    val bottomNavAnimationDuration = 200 // Duration for bottom nav animations (unused but kept for future use)
 
+    // Show global loading indicator when isLoading is true
     if (isLoading) {
         AppLoader()
     }
@@ -133,14 +151,16 @@ fun App() {
     Scaffold(
         containerColor = backgroundColor,
         bottomBar = {
+            // Only show bottom navigation on main screens
             if (shouldShowBottomNav) {
                 Column {
-                    // Show banner ad only for Radio and Live Stream screens
+                    // Show banner ad only for Radio and Live Stream screens (not Settings)
                     val shouldShowAd = currentScreenName == RadioScreenRoute::class.java.name || 
                                        currentScreenName == LiveStreamScreenRoute::class.java.name
 
                     if (shouldShowAd) {
-                        // Show banner ad based on selected ad network
+                        // Display banner ad based on configured ad network
+                        // Supports AdMob, Meta (Facebook), and Unity Ads
                         when (AppConstants.AD_NETWORK) {
                             AdNetwork.META -> {
                                 // Meta (Facebook) Banner Ad
@@ -320,6 +340,19 @@ fun App() {
     }
 }
 
+/**
+ * Custom floating bottom navigation bar component.
+ * 
+ * This composable creates a modern, floating-style bottom navigation bar with:
+ * - Rounded corners and shadow for elevation effect
+ * - Gradient background for visual appeal
+ * - Animated icon and text colors based on selection state
+ * - Smooth transitions between navigation items
+ * 
+ * @param items List of Screen objects representing navigation items
+ * @param currentRoute The currently active route identifier
+ * @param onItemClick Callback invoked when a navigation item is clicked
+ */
 @Composable
 fun FloatingBottomNavigationBar(
     items: List<Screen>,
@@ -367,6 +400,18 @@ fun FloatingBottomNavigationBar(
     }
 }
 
+/**
+ * Individual navigation item within the floating bottom navigation bar.
+ * 
+ * Each item displays:
+ * - An icon that changes color based on selection state
+ * - A label text that also changes color when selected
+ * - Smooth color animations when selection state changes
+ * 
+ * @param screen The Screen object containing icon, title, and route information
+ * @param isSelected Whether this item is currently selected/active
+ * @param onClick Callback invoked when the item is clicked
+ */
 @Composable
 fun FloatingNavItem(
     screen: Screen,
